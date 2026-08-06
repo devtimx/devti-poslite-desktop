@@ -1,4 +1,4 @@
-name: Build and Release Windows EXE
+name: Build and Release Windows Installer
 
 on:
   workflow_dispatch:
@@ -26,30 +26,43 @@ jobs:
       - name: Build solution
         run: dotnet build DevtiPosLite.slnx -c Release --no-restore
 
-      - name: Publish Windows x64 app
+      - name: Publish Windows x64 app (self-contained single file)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path release | Out-Null
-          dotnet publish DevtiPosLite.UI/DevtiPosLite.UI.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/win-x64
-
-      - name: Create ZIP package
-        shell: pwsh
-        run: |
-          if (!(Test-Path "publish/win-x64")) {
-            throw "Publish output folder was not created."
+          dotnet publish DevtiPosLite.UI/DevtiPosLite.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/win-x64
+          if (!(Test-Path "publish/win-x64/DevtiPosLite.UI.exe")) {
+            throw "Publish output was not created."
           }
-          Compress-Archive -Path publish/win-x64/* -DestinationPath release/DevTi-Pos-Lite-win-x64.zip -Force
 
-      - name: Upload build artifact
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer (setup.exe)
+        shell: pwsh
+        run: |
+          $csproj = [xml](Get-Content "DevtiPosLite.UI\DevtiPosLite.UI.csproj")
+          $ver = $csproj.Project.PropertyGroup.Version
+          if (-not $ver) { $ver = "1.0.0" }
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\installer.iss" /DAppVersion=$ver /Qp
+          $setup = Get-ChildItem "release\DevTi-Pos-Lite-Setup-*.exe" | Select-Object -First 1
+          if (-not $setup) {
+            throw "Setup exe was not created."
+          }
+          Write-Output "Installer created: $($setup.FullName)"
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DevTi-Pos-Lite-win-x64
-          path: release/DevTi-Pos-Lite-win-x64.zip
+          name: DevTi-Pos-Lite-Setup
+          path: release/DevTi-Pos-Lite-Setup-*.exe
+          if-no-files-found: error
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: manual-${{ github.run_number }}
           name: Manual build ${{ github.run_number }}
-          files: release/DevTi-Pos-Lite-win-x64.zip
+          files: release/DevTi-Pos-Lite-Setup-*.exe
           generate_release_notes: true
