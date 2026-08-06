@@ -2,41 +2,69 @@ name: Build and Release Windows EXE
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+    paths:
+      - '.github/workflows/release.yml'
+      - 'DevtiPosLite.slnx'
+      - 'DevtiPosLite.Core/**'
+      - 'DevtiPosLite.Services/**'
+      - 'DevtiPosLite.UI/**'
+      - 'DevtiPosLite.Data/**'
   workflow_dispatch:
 
 permissions:
   contents: write
 
+env:
+  SOLUTION_FILE: DevtiPosLite.slnx
+  PROJECT_FILE: DevtiPosLite.UI/DevtiPosLite.UI.csproj
+  OUTPUT_DIR: publish/win-x64
+  PACKAGE_NAME: DevTi-Pos-Lite-win-x64.zip
+
 jobs:
   build-release:
     runs-on: windows-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             10.0.x
+          cache: true
 
       - name: Restore dependencies
-        run: dotnet restore DevtiPosLite.slnx
+        run: dotnet restore $env:SOLUTION_FILE
 
       - name: Build solution
-        run: dotnet build DevtiPosLite.slnx -c Release --no-restore
+        run: dotnet build $env:SOLUTION_FILE -c Release --no-restore
 
       - name: Publish Windows x64 app
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
-          dotnet publish DevtiPosLite.UI/DevtiPosLite.UI.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/win-x64
+          dotnet publish $env:PROJECT_FILE -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:UseAppHost=true -o $env:OUTPUT_DIR
+
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          if (!(Test-Path $env:OUTPUT_DIR)) {
+            throw "Publish output folder was not created."
+          }
+          Get-ChildItem -Path $env:OUTPUT_DIR | Select-Object Name, Length
 
       - name: Create ZIP package
+        shell: pwsh
         run: |
-          Compress-Archive -Path publish/win-x64/* -DestinationPath release/DevTi-Pos-Lite-win-x64.zip -Force
+          Compress-Archive -Path "$env:OUTPUT_DIR/*" -DestinationPath "release/$env:PACKAGE_NAME" -Force
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -45,6 +73,7 @@ jobs:
           path: release/DevTi-Pos-Lite-win-x64.zip
 
       - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('manual-{0}', github.run_number) }}
