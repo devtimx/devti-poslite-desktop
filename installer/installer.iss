@@ -22,6 +22,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir={#SourcePath}..\release
 OutputBaseFilename=DevTi-Pos-Lite-Setup-{#AppVersion}
+SetupIconFile={#SourcePath}..\DevtiPosLite.UI\assets\app.ico
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -41,6 +42,7 @@ Source: "{#SourcePath}..\publish\win-x64\*"; DestDir: "{app}"; Flags: ignorevers
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]

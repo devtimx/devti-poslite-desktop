@@ -3,6 +3,7 @@ namespace DevtiPosLite.UI.Helpers;
 public static class ImageHelper
 {
     private static string? _basePath;
+    private const string DefaultLogoRelative = @"assets\default-logo.png";
 
     public static void Initialize(string basePath)
     {
@@ -41,6 +42,15 @@ public static class ImageHelper
             return null;
         var fullPath = Path.Combine(_basePath, relativePath);
         return File.Exists(fullPath) ? fullPath : null;
+    }
+
+    public static string? ResolveLogoPath(string? relativePath)
+    {
+        var configured = ResolvePath(relativePath);
+        if (configured != null) return configured;
+        if (_basePath == null) return null;
+        var fallback = Path.Combine(_basePath, DefaultLogoRelative);
+        return File.Exists(fallback) ? fallback : null;
     }
 
     public static Size FitSize(int width, int height, int maxWidth, int maxHeight)

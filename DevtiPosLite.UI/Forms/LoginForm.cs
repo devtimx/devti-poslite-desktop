@@ -127,7 +127,7 @@ public partial class LoginForm : Form
             if (hasName || !string.IsNullOrWhiteSpace(config.BusinessName))
                 lblStore.Text = storeName!;
 
-            var logoPath = ImageHelper.ResolvePath(config.LogoPath);
+            var logoPath = ImageHelper.ResolveLogoPath(config.LogoPath);
             if (logoPath != null)
             {
                 try

@@ -36,7 +36,7 @@ public partial class TicketPreviewForm : Form
 
         if (!string.IsNullOrWhiteSpace(config.LogoPath))
         {
-            var logo = ImageHelper.ResolvePath(config.LogoPath);
+            var logo = ImageHelper.ResolveLogoPath(config.LogoPath);
             if (logo != null)
             {
                 try { picLogo.Image = Image.FromFile(logo); } catch { }

@@ -238,7 +238,7 @@ public partial class ConfigForm : Form
 
     private void UpdateLogoPreview()
     {
-        var savedLogo = ImageHelper.ResolvePath(_config.LogoPath);
+        var savedLogo = ImageHelper.ResolveLogoPath(_config.LogoPath);
         if (savedLogo != null)
             SetLogoImage(savedLogo);
     }
