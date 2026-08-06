@@ -1,0 +1,55 @@
+name: Build and Release Windows EXE
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore DevtiPosLite.slnx
+
+      - name: Build solution
+        run: dotnet build DevtiPosLite.slnx -c Release --no-restore
+
+      - name: Publish Windows x64 app
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          dotnet publish DevtiPosLite.UI/DevtiPosLite.UI.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/win-x64
+
+      - name: Create ZIP package
+        shell: pwsh
+        run: |
+          if (!(Test-Path "publish/win-x64")) {
+            throw "Publish output folder was not created."
+          }
+          Compress-Archive -Path publish/win-x64/* -DestinationPath release/DevTi-Pos-Lite-win-x64.zip -Force
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevTi-Pos-Lite-win-x64
+          path: release/DevTi-Pos-Lite-win-x64.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: manual-${{ github.run_number }}
+          name: Manual build ${{ github.run_number }}
+          files: release/DevTi-Pos-Lite-win-x64.zip
+          generate_release_notes: true
