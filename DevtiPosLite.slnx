@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="DevtiPosLite.Core/DevtiPosLite.Core.csproj" />
+  <Project Path="DevtiPosLite.Data/DevtiPosLite.Data.csproj" />
+  <Project Path="DevtiPosLite.Services/DevtiPosLite.Services.csproj" />
+  <Project Path="DevtiPosLite.UI/DevtiPosLite.UI.csproj" />
+</Solution>
