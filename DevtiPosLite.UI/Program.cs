@@ -60,6 +60,7 @@ static class Program
         services.AddTransient<RolesForm>();
         services.AddTransient<PermissionsForm>();
         services.AddTransient<ConfigForm>();
+        services.AddTransient<AboutForm>();
 
         ServiceProvider = services.BuildServiceProvider();
 

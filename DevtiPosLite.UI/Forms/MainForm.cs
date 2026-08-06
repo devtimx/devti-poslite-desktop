@@ -63,6 +63,12 @@ public partial class MainForm : Form
         mnuConfig.Enabled = _authStore.HasPermission("Config_index");
         mnuConfig.Click += (s, e) => OpenForm<ConfigForm>();
         admin.DropDownItems.Add(mnuConfig);
+
+        admin.DropDownItems.Add(new ToolStripSeparator());
+
+        var mnuAbout = new ToolStripMenuItem("Acerca de");
+        mnuAbout.Click += (s, e) => OpenForm<AboutForm>();
+        admin.DropDownItems.Add(mnuAbout);
         menu.Items.Add(admin);
 
         var lblUser = new ToolStripLabel($"   Usuario: {_authStore.CurrentUser?.Name ?? ""}   ");
